@@ -1,0 +1,123 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(nycflights13)
+library(igraph)
+library(intergraph)
+library(sna)
+library(ggplot2)
+library(ggnetwork)
+library(viridis)
+library(plotly)
+```
+
+```{r}
+flights %>% head()
+```
+
+There are `r flights %>% nrow() %>% format(big.mark=",")` flights.
+
+```{r}
+df_edges <- flights %>% group_by(origin, dest) %>% summarize(weight = n())
+df_edges %>% arrange(desc(weight)) %>% head()
+```
+
+There are `r df_edges %>% nrow() %>% format(big.mark=",")` total edges.
+
+Add colors to edge for each `origin` which will be used for final ggplot.
+
+```{r}
+# blue, red, green
+colors = c("#3498db", "#e74c3c", "#2ecc71")
+
+# seting alphabetical order; allows for predictable ordering later
+origins = c("EWR", "JFK", "LGA")
+
+df_colors = tbl_df(data.frame(origin=origins, color=colors))
+df_edges <- df_edges %>% left_join(df_colors)
+
+df_edges %>% arrange(desc(weight)) %>% head()
+```
+
+
+```{r}
+net <- graph.data.frame(df_edges, directed = T)
+V(net)$degree <- centralization.degree(net)$res
+V(net)$weighted_degree <- graph.strength(net)
+V(net)$color_v <- c(colors, rep("#1a1a1a", gorder(net) - length(colors)))
+
+net
+```
+
+Write specialized hovertext for each vertex. Note that airport attributes must be mapped to same order as vertices.
+
+
+```{r}
+
+df_airports <- data.frame(vname=V(net)$name) %>% left_join(airports, by=c("vname" = "faa"))
+
+V(net)$text <- paste(V(net)$name,
+                       df_airports$name,
+                       paste(format(V(net)$weighted_degree, big.mark=",", trim=T), "Flights"),
+                        sep = "<br>")
+
+V(net)$text %>% head()
+```
+
+Add latitudes/longitudes to both vertices and edges for spatial map;
+
+```{r}
+V(net)$lat <- df_airports$lat
+V(net)$lon <- df_airports$lon
+
+# gives to/from locations; map to corresponding ending lat/long
+end_loc <- data.frame(ename=get.edgelist(net)[,2]) %>% left_join(airports, by=c("ename" = "faa"))
+
+E(net)$endlat <- end_loc$lat
+E(net)$endlon <- end_loc$lon
+```
+
+# Plotting the Network Graph
+
+```{r}
+df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="weight", niter=5000, arrow.gap=0)
+df_net %>% head()
+```
+
+```{r}
+plot <- ggplot(df_net, aes(x = x, y = y, xend = xend, yend = yend)) +
+    geom_edges(aes(color = color), size=0.4, alpha=0.25) +
+    geom_nodes(aes(color = color_v, size = degree, text=text)) +
+    ggtitle("Network Graph of U.S. Flights Outbound from NYC in 2013") +
+    scale_color_manual(labels=c("Others", "LGA", "EWR", "JFK"), 
+                         values=c("#1a1a1a", colors)) +
+    guides(size=FALSE) +
+    theme_blank()
+
+plot
+```
+
+```{r}
+plot %>% ggplotly(tooltip="text") %>% toWebGL()
+```
+
+## Plot by Physical Location
+
+```{r}
+plot <- ggplot(df_net, aes(x = lon, y = lat, xend = endlon, yend = endlat)) +
+    geom_edges(aes(color = color), size=0.4, alpha=0.25) +
+    geom_nodes(aes(color = color_v, size = degree, text=text)) +
+    ggtitle("Network Graph of Flights Outbound from NYC in 2013") +
+    scale_color_identity() +
+    theme_blank()
+
+plot
+```
+
+```{r}
+plot %>% ggplotly(tooltip="text") %>% toWebGL()
+```
