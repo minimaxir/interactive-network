@@ -37,7 +37,7 @@ colors = c("#3498db", "#e74c3c", "#2ecc71")
 # seting alphabetical order; allows for predictable ordering later
 origins = c("EWR", "JFK", "LGA")
 
-df_colors = tbl_df(data.frame(origin=origins, color=colors))
+df_colors = tbl_df(data.frame(origin=origins, color=origins))
 df_edges <- df_edges %>% left_join(df_colors)
 
 df_edges %>% arrange(desc(weight)) %>% head()
@@ -48,7 +48,7 @@ df_edges %>% arrange(desc(weight)) %>% head()
 net <- graph.data.frame(df_edges, directed = T)
 V(net)$degree <- centralization.degree(net)$res
 V(net)$weighted_degree <- graph.strength(net)
-V(net)$color_v <- c(colors, rep("#1a1a1a", gorder(net) - length(colors)))
+V(net)$color_v <- c(origins, rep("Others", gorder(net) - length(colors)))
 
 net
 ```
@@ -93,8 +93,8 @@ plot <- ggplot(df_net, aes(x = x, y = y, xend = xend, yend = yend)) +
     geom_edges(aes(color = color), size=0.4, alpha=0.25) +
     geom_nodes(aes(color = color_v, size = degree, text=text)) +
     ggtitle("Network Graph of U.S. Flights Outbound from NYC in 2013") +
-    scale_color_manual(labels=c("Others", "LGA", "EWR", "JFK"), 
-                         values=c("#1a1a1a", colors)) +
+    scale_color_manual(labels=c("LGA", "EWR", "JFK", "Others"), 
+                         values=c(colors, "#1a1a1a"), name="Airports") +
     guides(size=FALSE) +
     theme_blank()
 
@@ -111,8 +111,10 @@ plot %>% ggplotly(tooltip="text") %>% toWebGL()
 plot <- ggplot(df_net, aes(x = lon, y = lat, xend = endlon, yend = endlat)) +
     geom_edges(aes(color = color), size=0.4, alpha=0.25) +
     geom_nodes(aes(color = color_v, size = degree, text=text)) +
-    ggtitle("Network Graph of Flights Outbound from NYC in 2013") +
-    scale_color_identity() +
+    ggtitle("Locations of U.S. Flights Outbound from NYC in 2013") +
+    scale_color_manual(labels=c("LGA", "EWR", "JFK", "Others"), 
+                         values=c(colors, "#1a1a1a"), name="Airports") +
+    guides(size=FALSE) +
     theme_blank()
 
 plot
