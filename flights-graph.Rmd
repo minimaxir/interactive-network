@@ -1,7 +1,24 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "How to Create an Interactive WebGL Network Graph Using R"
+author: "Max Woolf (@minimaxir)"
+date: "November 15th, 2016"
+output:
+  html_notebook:
+    highlight: tango
+    mathjax: null
+    number_sections: yes
+    theme: spacelab
+    toc: yes
+    toc_float: yes
 ---
+
+This R Notebook is the complement to my blog post [What Percent of the Top-Voted Comments in Reddit Threads Were Also 1st Comment?](http://minimaxir.com/2016/11/first-comment/).
+
+This notebook is licensed under the MIT License. If you use the code or data visualization designs contained within this notebook, it would be greatly appreciated if proper attribution is given back to this notebook and/or myself. Thanks! :)
+
+# Setup
+
+Setup the R packages.
 
 ```{r}
 library(dplyr)
@@ -13,22 +30,29 @@ library(ggplot2)
 library(ggnetwork)
 library(viridis)
 library(plotly)
+library(htmlwidgets)
 ```
+
+The `nycflights13` package contains a `flights` dataset.
 
 ```{r}
 flights %>% head()
 ```
 
-There are `r flights %>% nrow() %>% format(big.mark=",")` flights.
+There are **`r flights %>% nrow() %>% format(big.mark=",")`** flights in the dataset.
+
+# Build the Network
+
+Getting the edge weights is a `dplyr` aggregation.
 
 ```{r}
 df_edges <- flights %>% group_by(origin, dest) %>% summarize(weight = n())
 df_edges %>% arrange(desc(weight)) %>% head()
 ```
 
-There are `r df_edges %>% nrow() %>% format(big.mark=",")` total edges.
+There are **`r df_edges %>% nrow() %>% format(big.mark=",")`** total edges.
 
-Add colors to edge for each `origin` which will be used for final ggplot.
+Add a colors column to edge for each `origin` which will eventually be used for final ggplot.
 
 ```{r}
 # blue, red, green
@@ -83,6 +107,8 @@ E(net)$endlon <- end_loc$lon
 
 # Plotting the Network Graph
 
+Use `ggnetwork` to transform the network to a `ggplot` friendly format.
+
 ```{r}
 df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="weight", niter=5000, arrow.gap=0)
 df_net %>% head()
@@ -105,6 +131,13 @@ plot
 plot %>% ggplotly(tooltip="text") %>% toWebGL()
 ```
 
+Save interactive plot locally to disk using `htmlwidgets` for uploading to my website. (this only saves the data/layout; you will need to provide the relevant plot.ly javascript on your own website)
+
+```{r}
+plot %>% ggplotly(tooltip="text", width="100%", height=600) %>%
+    saveWidget("ggplot-graph-1.html", selfcontained=F, libdir="plotly")
+```
+
 ## Plot by Physical Location
 
 ```{r}
@@ -123,3 +156,20 @@ plot
 ```{r}
 plot %>% ggplotly(tooltip="text") %>% toWebGL()
 ```
+
+```{r}
+plot %>% ggplotly(tooltip="text", width="100%", height=600) %>%
+    saveWidget("ggplot-graph-2.html", selfcontained=F, libdir="plotly")
+```
+
+# LICENSE
+
+The MIT License (MIT)
+
+Copyright (c) 2016 Max Woolf
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
