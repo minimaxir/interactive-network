@@ -1,5 +1,5 @@
 ---
-title: "How to Create an Interactive WebGL Network Graph Using R"
+title: "How to Create an Interactive WebGL Network Graph Using R and Plotly"
 author: "Max Woolf (@minimaxir)"
 date: "November 15th, 2016"
 output:
@@ -21,6 +21,10 @@ This notebook is licensed under the MIT License. If you use the code or data vis
 Setup the R packages.
 
 ```{r}
+
+# must install ggnetwork using from source to avoid ggplot2 2.2.0 issue
+# install.packages("ggnetwork", type="source")
+
 library(dplyr)
 library(nycflights13)
 library(igraph)
@@ -28,9 +32,10 @@ library(intergraph)
 library(sna)
 library(ggplot2)
 library(ggnetwork)
-library(viridis)
 library(plotly)
 library(htmlwidgets)
+
+sessionInfo()
 ```
 
 The `nycflights13` package contains a `flights` dataset.
@@ -110,7 +115,7 @@ E(net)$endlon <- end_loc$lon
 Use `ggnetwork` to transform the network to a `ggplot` friendly format.
 
 ```{r}
-df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="weight", niter=5000, arrow.gap=0)
+df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="weight", niter=50000, arrow.gap=0)
 df_net %>% head()
 ```
 
@@ -119,7 +124,7 @@ plot <- ggplot(df_net, aes(x = x, y = y, xend = xend, yend = yend)) +
     geom_edges(aes(color = color), size=0.4, alpha=0.25) +
     geom_nodes(aes(color = color_v, size = degree, text=text)) +
     ggtitle("Network Graph of U.S. Flights Outbound from NYC in 2013") +
-    scale_color_manual(labels=c("LGA", "EWR", "JFK", "Others"), 
+    scale_color_manual(labels=c("EWR", "JFK", "LGA", "Others"), 
                          values=c(colors, "#1a1a1a"), name="Airports") +
     guides(size=FALSE) +
     theme_blank()
@@ -134,7 +139,8 @@ plot %>% ggplotly(tooltip="text") %>% toWebGL()
 Save interactive plot locally to disk using `htmlwidgets` for uploading to my website. (this only saves the data/layout; you will need to provide the relevant plot.ly javascript on your own website)
 
 ```{r}
-plot %>% ggplotly(tooltip="text", width="100%", height=600) %>%
+plot %>% ggplotly(tooltip="text") %>%
+    toWebGL() %>% 
     saveWidget("ggplot-graph-1.html", selfcontained=F, libdir="plotly")
 ```
 
@@ -145,7 +151,7 @@ plot <- ggplot(df_net, aes(x = lon, y = lat, xend = endlon, yend = endlat)) +
     geom_edges(aes(color = color), size=0.4, alpha=0.25) +
     geom_nodes(aes(color = color_v, size = degree, text=text)) +
     ggtitle("Locations of U.S. Flights Outbound from NYC in 2013") +
-    scale_color_manual(labels=c("LGA", "EWR", "JFK", "Others"), 
+    scale_color_manual(labels=c("EWR", "JFK", "LGA", "Others"), 
                          values=c(colors, "#1a1a1a"), name="Airports") +
     guides(size=FALSE) +
     theme_blank()
@@ -158,9 +164,31 @@ plot %>% ggplotly(tooltip="text") %>% toWebGL()
 ```
 
 ```{r}
-plot %>% ggplotly(tooltip="text", width="100%", height=600) %>%
+plot %>% ggplotly(tooltip="text") %>%
+    toWebGL() %>%
     saveWidget("ggplot-graph-2.html", selfcontained=F, libdir="plotly")
 ```
+
+# Simplified Version
+
+Minimum amount of code needed to demonstate proof-of-concept for article.
+
+```{r}
+df_edges <- flights %>% group_by(origin, dest) %>% summarize(weight = n())
+net <- graph.data.frame(df_edges, directed = T)
+V(net)$degree <- centralization.degree(net)$res
+df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="weight", niter=5000)
+
+plot <- ggplot(df_net, aes(x = x, y = y, xend = xend, yend = yend)) +
+    geom_edges(size=0.4, alpha=0.25) +
+    geom_nodes(aes(size = degree, text=vertex.names)) +
+    ggtitle("Network Graph of U.S. Flights Outbound from NYC in 2013") +
+    theme_blank()
+
+plot
+plot %>% ggplotly(tooltip="text") %>% toWebGL()
+```
+
 
 # LICENSE
 
