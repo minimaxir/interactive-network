@@ -12,7 +12,7 @@ output:
     toc_float: yes
 ---
 
-This R Notebook is the complement to my blog post [What Percent of the Top-Voted Comments in Reddit Threads Were Also 1st Comment?](http://minimaxir.com/2016/11/first-comment/).
+This R Notebook is the complement to my blog post [How to Create an Interactive WebGL Network Graph Using R](http://minimaxir.com/2016/11/interactive-network/).
 
 This notebook is licensed under the MIT License. If you use the code or data visualization designs contained within this notebook, it would be greatly appreciated if proper attribution is given back to this notebook and/or myself. Thanks! :)
 
@@ -75,11 +75,11 @@ df_edges %>% arrange(desc(weight)) %>% head()
 
 ```{r}
 net <- graph.data.frame(df_edges, directed = T)
+net
+
 V(net)$degree <- centralization.degree(net)$res
 V(net)$weighted_degree <- graph.strength(net)
 V(net)$color_v <- c(origins, rep("Others", gorder(net) - length(colors)))
-
-net
 ```
 
 Write specialized hovertext for each vertex. Note that airport attributes must be mapped to same order as vertices.
@@ -139,10 +139,16 @@ plot %>% ggplotly(tooltip="text") %>% toWebGL()
 Save interactive plot locally to disk using `htmlwidgets` for uploading to my website. (this only saves the data/layout; you will need to provide the relevant plot.ly javascript on your own website)
 
 ```{r}
-plot %>% ggplotly(tooltip="text") %>%
+plot %>% ggplotly(tooltip="text", height=400) %>%
     toWebGL() %>% 
     saveWidget("ggplot-graph-1.html", selfcontained=F, libdir="plotly")
 ```
+
+I make a few manual changes to the output for the output used on the website:
+
+* Only extract the script and the HTML container. The static files are loaded separately.
+* Set the browser padding CSS to 0.
+* Set font family of title and legend to Source Sans Pro.
 
 ## Plot by Physical Location
 
@@ -164,7 +170,7 @@ plot %>% ggplotly(tooltip="text") %>% toWebGL()
 ```
 
 ```{r}
-plot %>% ggplotly(tooltip="text") %>%
+plot %>% ggplotly(tooltip="text", height=400) %>%
     toWebGL() %>%
     saveWidget("ggplot-graph-2.html", selfcontained=F, libdir="plotly")
 ```
@@ -186,7 +192,13 @@ plot <- ggplot(df_net, aes(x = x, y = y, xend = xend, yend = yend)) +
     theme_blank()
 
 plot
+```
+
+```{r}
 plot %>% ggplotly(tooltip="text") %>% toWebGL()
+plot %>% ggplotly(tooltip="text", height=400) %>%
+    toWebGL() %>%
+    saveWidget("ggplot-graph-3.html", selfcontained=F, libdir="plotly")
 ```
 
 
