@@ -1,7 +1,7 @@
-# first-comment
-R Code + R Notebook for querying, analyzing, and visualizing the Reddit data to determine the impact of the first comment in a Reddit thread.
+# interactive-network
+R Code + R Notebook for creating an interactive graph network using R and Plotly.
 
-This repository is the complement to my blog post [What Percent of the Top-Voted Comments in Reddit Threads Were Also 1st Comment?](http://minimaxir.com/2016/11/first-comment/).
+This repository is the complement to my blog post [How to Create an Interactive WebGL Network Graph Using R](http://minimaxir.com/2016/11/interactive-network/).
 
 ## Maintainer
 
