@@ -1,7 +1,7 @@
 ---
 title: "How to Create an Interactive WebGL Network Graph Using R and Plotly"
 author: "Max Woolf (@minimaxir)"
-date: "November 30th, 2016"
+date: "December 5th, 2016"
 output:
   html_notebook:
     highlight: tango
@@ -12,7 +12,7 @@ output:
     toc_float: yes
 ---
 
-This R Notebook is the complement to my blog post [How to Create an Interactive WebGL Network Graph Using R](http://minimaxir.com/2016/11/interactive-network/).
+This R Notebook is the complement to my blog post [How to Create an Interactive WebGL Network Graph Using R](http://minimaxir.com/2016/12/interactive-network/).
 
 This notebook is licensed under the MIT License. If you use the code or data visualization designs contained within this notebook, it would be greatly appreciated if proper attribution is given back to this notebook and/or myself. Thanks! :)
 
@@ -115,6 +115,9 @@ E(net)$endlon <- end_loc$lon
 Use `ggnetwork` to transform the network to a `ggplot` friendly format.
 
 ```{r}
+# ggnetwork sets default nodes randomly; set seed for reproducibility
+set.seed(123)
+
 df_net <- ggnetwork(net, layout = "fruchtermanreingold", weights="weight", niter=50000, arrow.gap=0)
 df_net %>% head()
 ```
@@ -127,7 +130,10 @@ plot <- ggplot(df_net, aes(x = x, y = y, xend = xend, yend = yend)) +
     scale_color_manual(labels=c("EWR", "JFK", "LGA", "Others"), 
                          values=c(colors, "#1a1a1a"), name="Airports") +
     guides(size=FALSE) +
-    theme_blank()
+    theme_blank() +
+    theme(plot.title = element_text(family="Source Sans Pro"),
+            legend.title = element_text(family="Source Sans Pro"),
+            legend.text = element_text(family="Source Sans Pro"))
 
 plot
 ```
@@ -148,7 +154,6 @@ I make a few manual changes to the output for the output used on the website:
 
 * Only extract the script and the HTML container. The static files are loaded separately.
 * Set the browser padding CSS to 0.
-* Set font family of title and legend to Source Sans Pro.
 
 ## Plot by Physical Location
 
@@ -160,7 +165,10 @@ plot <- ggplot(df_net, aes(x = lon, y = lat, xend = endlon, yend = endlat)) +
     scale_color_manual(labels=c("EWR", "JFK", "LGA", "Others"), 
                          values=c(colors, "#1a1a1a"), name="Airports") +
     guides(size=FALSE) +
-    theme_blank()
+    theme_blank() +
+    theme(plot.title = element_text(family="Source Sans Pro"),
+            legend.title = element_text(family="Source Sans Pro"),
+            legend.text = element_text(family="Source Sans Pro"))
 
 plot
 ```
